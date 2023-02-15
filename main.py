@@ -1,29 +1,29 @@
-import streamlit as st  # web development
-import pandas as pd  # read csv, df manipulation
-import statistics
-from PIL import Image
-import time
-from datetime import datetime, timedelta
+import time # measures program's speed and performance
+import statistics # calculates the mean of repair dates interval
 
-#Page Configuration
+import pandas as pd  # read csv, df manipulation
+import streamlit as st  # web development
+
+from PIL import Image # displays images
+from datetime import datetime, timedelta # using datetime objects
+
+# streamlit page config
 st.set_page_config(page_title='Real-Time Data Science Dashboard',
                    page_icon='i',
                    layout='wide')
 
-#FUNCTIONS
+# functions
 def convert_to_string(delta):
   days = delta.days
   hours, remainder = divmod(delta.seconds, 3600)
   minutes, seconds = divmod(remainder, 60)
   return '{} days {:02}:{:02}:{:02}'.format(days, hours, minutes, seconds)
 
-
 def convert_to_days(time_string):
   parts = time_string.split(' ')
   days = int(parts[0].strip().strip('days'))
   delta = timedelta(days=days)
   return delta.days
-
 
 def getLocation():
   count = 0
@@ -38,7 +38,6 @@ def getLocation():
       if count == 1:
         return latitude, longitude
       count += 1
-
 
 def formDatesList():
   count = 0
@@ -58,7 +57,6 @@ def formDatesList():
   DatesList.append(datetime.now())
 
   return DatesList, count
-
 
 def formDaysList(DatesList):
   DaysList = []
@@ -81,7 +79,6 @@ def formDaysList(DatesList):
 
   return DaysList
 
-
 def formExpectedList(DaysList):
   ExpectedList = []
   NonNegDaysList = []
@@ -97,29 +94,22 @@ def formExpectedList(DaysList):
 
   return ExpectedList
 
-
 # Lists formation
 DatesList, numRepairs = formDatesList()
-# print(f"\n\nDatesList: {DatesList}\n\n")
 DaysList = formDaysList(DatesList)
-# print(f"DaysList: {DaysList}\n\n")
 ExpectedList = formExpectedList(DaysList)
-# print(f"ExpectedList: {ExpectedList}\n\n")
 
 start = time.time()
 
-# DATA MANIPULATION
-
-# FOR COLUMNS
 # read in csv
 df = pd.read_csv("individ_testdata.csv")
 
-#Get Today's date as a DateTime object
+# Get Today's date as a DateTime object
 today = datetime.now()
 formatted_date = today.strftime("%Y-%m-%d")
 datetime_object = datetime.strptime(formatted_date, "%Y-%m-%d")
 
-#Find average time between repair dates
+# Find average time between repair dates
 avg_reliability = int(round(ExpectedList[0], 0))
 estimated_repair_date = DatesList[-2] + timedelta(days=avg_reliability)
 estimated_repair_date = datetime.strftime(estimated_repair_date, '%d/%m/%Y')
@@ -131,8 +121,6 @@ last_repair = datetime.strftime(last_repair, '%d/%m/%Y')
 # no repairs (col5)
 no_repairs_str = numRepairs
 
-# DATA DISPLAY
-
 # dashboard titles and headings
 st.header('SEW Service Dashboard')
 st.subheader(f":red[{'Driving the world.'}]")
@@ -141,8 +129,6 @@ now = now.strftime("%H:%M")
 time_now = f"Last Updated at {now}"
 st.caption(time_now)
 
-# st.info('This is a purely informational message', icon="ℹ️")
-
 # divider
 st.markdown("<hr style='background-color:black;'>", unsafe_allow_html=True)
 # ---------------------------------------------------------------------------
@@ -150,22 +136,22 @@ st.markdown("<hr style='background-color:black;'>", unsafe_allow_html=True)
 col1, col2, col3 = st.columns(3)
 
 with col1:
-  st.subheader(df['type'][0])
-  st.subheader(f":blue[{'Product ID: ' + df['productID'][0]}]")
+  st.subheader('Serial ID:')
+  st.subheader(f":blue[{df['productID'][0]}]")
 
 with col2:
   st.subheader("Last Repair Date:")
   st.subheader(f":blue[{last_repair}]")
 
 with col3:
-  st.subheader("Mean Time to Failure (MTTF):")
-  st.subheader(f":blue[{avg_reliability} Days]")
+  st.subheader("Mean Time Between Maintenance:")
+  st.subheader(f":blue[{avg_reliability} Days ({int(round(avg_reliability/7,0))} Weeks)]")
 
 col4, col5, col6 = st.columns(3)
 
 with col4:
-  st.subheader('Customer: ' + df['customer'][0])
-  st.subheader(f":blue[{df['address'][0]}]")
+  st.subheader('Customer Name and Location: ')
+  st.subheader(f":blue[{df['customer'][0] + ', ' + df['address'][0]}]")
 
 with col5:
   st.subheader("No. Repairs To Date:")
@@ -263,10 +249,10 @@ with col9:
     old_avg_reliability = avg_reliability
     avg_reliability = ExpectedList[0]
 
-  audio_upload = tab1.file_uploader('Upload Machine Audio', '.mp3')
+  audio_upload = tab1.file_uploader('Upload Machine Data', '.xml')
   if audio_upload is not None:
     # Save the file to disk
-    with open("audio_upload.mp3", "wb") as f:
+    with open("audio_upload.xml", "wb") as f:
       f.write(audio_upload.read())
     st.write("SEW Technician has received your file!")
 
@@ -280,8 +266,8 @@ with col12:
     model = df['type'][0]
     product = df['productID'][0]
     st.write(f"{'Model ID: ' + model}")
-    st.write(f":white[{'Product ID: ' + product}]")
-    text = 'The electrogearbox is a compact and efficient gear motor solution for the industry. The ' + model + ' is designed for use in a variety of applications, offering reliable and \nsmooth operation for demanding environments. The ' + product + ' version is equipped with advanced features to meet the specific needs of industrial applications. As an SEW technician, you should be familiar with the features \nand capabilities of the Electrogearbox, as it is a common product used in a wide range of industrial applications.'
+    st.write(f":white[{'Serial ID: ' + product}]")
+    text = 'The electrogearbox is a compact and efficient gear motor solution for the industry. The ' + model + ' is designed for use in a variety of applications, offering reliable and \nsmooth operation for demanding environments. The ' + model + ' version is equipped with advanced features to meet the specific needs of industrial applications. As an SEW technician, you should be familiar with the features \nand capabilities of the Electrogearbox, as it is a common product used in a wide range of industrial applications.'
     st.write(text)
     customer_image = Image.open('images/customer_image.png')
     st.subheader('Customer Configuration:')
